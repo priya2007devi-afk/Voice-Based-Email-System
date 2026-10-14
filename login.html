@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Voice Email System - Login</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #2196f3, #00c9a7);
+        }
+
+        .login-card {
+            width: 90%;
+            max-width: 400px;
+            padding: 35px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #176b87;
+            font-size: 25px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #078bd3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #056da8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .voice-button {
+            background: #078b68;
+        }
+
+        .voice-button:hover {
+            background: #056b51;
+        }
+
+        .error {
+            color: #d93025;
+            margin-bottom: 15px;
+        }
+
+        #voiceStatus {
+            margin-top: 15px;
+            margin-bottom: 0;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+
+        <div class="icon">📧</div>
+
+        <h1>Voice Based Email System</h1>
+
+        <p>Please login to continue</p>
+
+        <form action="/login" method="POST" id="loginForm">
+
+            <label for="username">Username</label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter username"
+                required
+                autocomplete="off"
+            >
+
+            <label for="password">Password</label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter password"
+                required
+                autocomplete="new-password"
+            >
+
+            <button type="submit" id="loginButton">
+                Login
+            </button>
+
+        </form>
+
+        <button
+            type="button"
+            id="voiceLogin"
+            class="voice-button"
+        >
+            🎤 Voice Login
+        </button>
+
+        <p id="voiceStatus" aria-live="polite"></p>
+
+    </div>
+
+    <script>
+        const usernameBox = document.getElementById("username");
+        const passwordBox = document.getElementById("password");
+        const loginForm = document.getElementById("loginForm");
+        const voiceLoginButton = document.getElementById("voiceLogin");
+        const loginButton = document.getElementById("loginButton");
+        const voiceStatus = document.getElementById("voiceStatus");
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        let cancelled = false;
+
+        function speak(text) {
+            return new Promise(resolve => {
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                utterance.lang = "en-IN";
+                utterance.rate = 0.9;
+
+                utterance.onend = resolve;
+                utterance.onerror = resolve;
+
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        function listen() {
+            return new Promise((resolve, reject) => {
+
+                if (!SpeechRecognition) {
+                    reject(
+                        new Error(
+                            "Voice recognition is not supported. Please use Google Chrome."
+                        )
+                    );
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+
+                recognition.lang = "en-IN";
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = event => {
+                    const result =
+                        event.results[0][0].transcript.trim();
+
+                    resolve(result);
+                };
+
+                recognition.onerror = event => {
+                    reject(
+                        new Error(
+                            event.error === "not-allowed"
+                                ? "Please allow microphone access."
+                                : "I could not hear you. Please try again."
+                        )
+                    );
+                };
+
+                recognition.onnomatch = () => {
+                    reject(
+                        new Error("Speech not recognized. Please try again.")
+                    );
+                };
+
+                recognition.start();
+            });
+        }
+
+        async function ask(question) {
+            voiceStatus.textContent = question;
+
+            await speak(question);
+
+            return await listen();
+        }
+
+        function normalizeAnswer(text) {
+            return text
+                .toLowerCase()
+                .trim()
+                .replace(/[.,!?]/g, "");
+        }
+
+        async function askConfirmation(label, value) {
+
+            while (true) {
+
+                const answer = normalizeAnswer(
+                    await ask(
+                        "You said " + value +
+                        ". Is your " + label +
+                        " correct? Please say correct or incorrect."
+                    )
+                );
+
+                if (
+                    answer === "correct" ||
+                    answer === "yes" ||
+                    answer === "right"
+                ) {
+                    return true;
+                }
+
+                if (
+                    answer === "incorrect" ||
+                    answer === "wrong" ||
+                    answer === "no"
+                ) {
+                    return false;
+                }
+
+                await speak(
+                    "Please say correct or incorrect."
+                );
+            }
+        }
+
+        async function getUsername() {
+
+            while (true) {
+
+                const spokenUsername = (
+                    await ask("Please say your username.")
+                ).trim();
+
+                usernameBox.value = spokenUsername;
+
+                if (
+                    await askConfirmation(
+                        "username",
+                        spokenUsername
+                    )
+                ) {
+                    return;
+                }
+
+                usernameBox.value = "";
+
+                await speak(
+                    "Please say your username again."
+                );
+            }
+        }
+
+        function convertSpokenDigits(text) {
+
+            const digitWords = {
+                "zero": "0",
+                "oh": "0",
+                "one": "1",
+                "two": "2",
+                "to": "2",
+                "too": "2",
+                "three": "3",
+                "four": "4",
+                "for": "4",
+                "five": "5",
+                "six": "6",
+                "seven": "7",
+                "eight": "8",
+                "ate": "8",
+                "nine": "9"
+            };
+
+            return text
+                .toLowerCase()
+                .replace(/[.,-]/g, " ")
+                .split(/\s+/)
+                .map(word => digitWords[word] ?? word)
+                .join("");
+        }
+
+        async function getPassword() {
+
+            while (true) {
+
+                const spokenPassword = await ask(
+                    "Please say your password one digit at a time."
+                );
+
+                const password = convertSpokenDigits(
+                    spokenPassword
+                );
+
+                passwordBox.value = password;
+
+                // Do not speak the actual password aloud.
+                if (
+                    await askConfirmation(
+                        "password",
+                        "the password you entered"
+                    )
+                ) {
+                    return;
+                }
+
+                passwordBox.value = "";
+
+                await speak(
+                    "Please say your password again."
+                );
+            }
+        }
+
+        async function startVoiceLogin() {
+
+            cancelled = false;
+            voiceLoginButton.disabled = true;
+            loginButton.disabled = true;
+
+            try {
+
+                if (!SpeechRecognition) {
+                    throw new Error(
+                        "Please open this page in Google Chrome to use voice login."
+                    );
+                }
+
+                await getUsername();
+
+                await getPassword();
+
+                while (true) {
+
+                    const action = normalizeAnswer(
+                        await ask(
+                            "Say Login to log in, or Cancel to stop."
+                        )
+                    );
+
+                    if (
+                        action === "login" ||
+                        action === "log in"
+                    ) {
+                        voiceStatus.textContent = "Logging in...";
+
+                        await speak("Logging in now.");
+
+                        loginForm.requestSubmit();
+
+                        return;
+                    }
+
+                    if (
+                        action === "cancel" ||
+                        action === "stop"
+                    ) {
+                        cancelled = true;
+
+                        usernameBox.value = "";
+                        passwordBox.value = "";
+
+                        voiceStatus.textContent = "Login cancelled.";
+
+                        await speak("Login cancelled.");
+
+                        return;
+                    }
+
+                    await speak(
+                        "Please say Login or Cancel."
+                    );
+                }
+
+            } catch (error) {
+
+                voiceStatus.textContent =
+                    error.message ||
+                    "Voice login failed. Please try again.";
+
+                await speak(voiceStatus.textContent);
+
+            } finally {
+
+                voiceLoginButton.disabled = false;
+                loginButton.disabled = false;
+            }
+        }
+
+        voiceLoginButton.addEventListener(
+            "click",
+            startVoiceLogin
+        );
+    </script>
+
+</body>
+</html>
