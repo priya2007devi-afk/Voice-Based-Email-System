@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Voice Based Email System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <div class="email-card">
+
+        <!-- TITLE -->
+
+        <h1>
+            🎤 Voice Based Email System
+        </h1>
+
+        <p class="subtitle">
+            Send Email Using Voice Commands
+        </p>
+
+
+        <!-- RECEIVER EMAIL -->
+
+        <label>
+            Receiver Email
+        </label>
+
+        <div class="receiver-row">
+
+            <input
+                type="text"
+                id="receiver"
+                placeholder="Receiver email"
+                readonly
+            >
+
+            <button
+                type="button"
+                id="receiverBtn">
+
+                🎤 Receiver
+
+            </button>
+
+            <button
+                type="button"
+                id="correctionBtn"
+                class="correction-btn">
+
+                Correction
+
+            </button>
+
+        </div>
+
+
+        <!-- SUBJECT -->
+
+        <label>
+            Subject
+        </label>
+
+        <div class="subject-row">
+
+            <input
+                type="text"
+                id="subject"
+                placeholder="Enter Subject"
+                readonly
+            >
+
+            <button
+                type="button"
+                id="subjectBtn">
+
+                🎤 Subject
+
+            </button>
+
+        </div>
+
+
+        <!-- MESSAGE -->
+
+        <label>
+            Message
+        </label>
+
+        <textarea
+            id="message"
+            placeholder="Speak your message here..."
+            readonly>
+        </textarea>
+
+
+        <div class="message-buttons">
+
+            <button
+                type="button"
+                id="messageBtn">
+
+                🎤 Message
+
+            </button>
+
+
+            <button
+                type="button"
+                id="readBtn"
+                class="read-btn">
+
+                🔊 Read
+
+            </button>
+
+        </div>
+
+
+        <!-- ATTACH PHOTO -->
+
+        <label>
+            Attach Photo
+        </label>
+
+        <input
+            type="file"
+            id="photo"
+            name="photo"
+            accept="image/*"
+        >
+
+
+        <!-- SEND EMAIL -->
+
+        <button
+            type="button"
+            id="sendBtn"
+            class="send-btn">
+
+            📧 Send Email
+
+        </button>
+
+
+        <!-- START VOICE CONTROL -->
+
+        <button
+            type="button"
+            id="startButton"
+            class="start-btn"
+            onclick="startVoice()">
+
+            🎤 Start Voice Control
+
+        </button>
+
+
+        <!-- STATUS -->
+
+        <div id="status"></div>
+
+    </div>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+
+</html>
