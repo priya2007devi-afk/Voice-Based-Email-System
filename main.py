@@ -298,7 +298,7 @@ def send():
         server = smtplib.SMTP(
             "smtp.gmail.com",
             587,
-            timeout=20;
+            timeout=20
         )
 
         server.starttls()
