@@ -225,7 +225,7 @@ def send():
 
     sender_email ="priya2007devi@gmail.com"
 
-    app_password = ""
+    app_password = os.environ.get("app_password","")
 
 
     if not sender_email or not app_password:
